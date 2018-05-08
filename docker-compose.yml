@@ -1,0 +1,13 @@
+basic:
+  image: metro-consumer:1.0
+  links:
+    - cassandra
+    - kafka
+cassandra:
+  image: cassandra:latest
+  ports:
+    - "9042"
+kafka:
+  image: spotify/kafka
+  ports:
+    - "9092"
