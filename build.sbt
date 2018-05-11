@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   akkaPackage           %% "akka-stream-kafka"              % "0.20",
   "com.lightbend.akka"  %% "akka-stream-alpakka-cassandra"  % "0.18",
   akkaPackage           %% "akka-testkit"                   % akkaVersion % Test,
-  "org.scalatest"       %% "scalatest"                      % "3.0.5"     % Test
+  "org.scalatest"       %% "scalatest"                      % "3.0.5"     % Test,
+  "com.typesafe.akka"   %% "akka-http-testkit"              % "10.1.1"    % Test
+
 )
 
 enablePlugins(DockerPlugin, DockerComposePlugin)

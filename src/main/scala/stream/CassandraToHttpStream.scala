@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.alpakka.cassandra.scaladsl.CassandraSource
 import com.datastax.driver.core.{Session, SimpleStatement}
 import model._
+import scala.collection.JavaConverters._
 
 class CassandraToHttpStream(implicit val system: ActorSystem, implicit val materializer: ActorMaterializer, implicit val session: Session)
   extends HttpApp
@@ -15,14 +16,14 @@ class CassandraToHttpStream(implicit val system: ActorSystem, implicit val mater
 
   implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 
-  override protected def routes: Route =
+  override def routes: Route =
     get {
       pathPrefix("api") {
         pathPrefix("vehicles") {
           path("list") {
             complete(sourceList)
           } ~
-          pathPrefix("vehicle" / IntNumber) { vehicleId =>
+          pathPrefix("vehicle" / ".*".r) { vehicleId =>
             path("lastPosition") {
               complete(sourceLastPosition(vehicleId))
             }
@@ -46,23 +47,23 @@ class CassandraToHttpStream(implicit val system: ActorSystem, implicit val mater
       }
     }
 
-  def sourceList = CassandraSource(new SimpleStatement("SELECT vehicleId, longitude, latitude FROM metro.vehicle"))
+  def sourceList = CassandraSource(new SimpleStatement("SELECT vehicleId, longitude, latitude FROM metro.vehicle;"))
     .map(row => VehiclePosition(row.getString(0), row.getDouble(1), row.getDouble(2)))
 
-  def sourceLastPosition(vehicleId: Int) = sourceList.filter(_.id.toInt == vehicleId)
+  def sourceLastPosition(vehicleId: String) = sourceList.filter(_.id.id == vehicleId)
 
-  def sourceTiles = CassandraSource(new SimpleStatement("SELECT tile, vehicle FROM metro.vehicle_tile"))
+  def sourceTiles = CassandraSource(new SimpleStatement("SELECT tile, vehicles FROM metro.tile_vehicles;"))
 
   def sourceVehiclesInTiles(tiles : Seq[String]) = sourceTiles
     .filter{ row => tiles.contains(row.getString(0)) }
-    .map{ row => Vehicle(row.getString("vehicle")) }
+    .mapConcat{ row => row.getSet("vehicles", classOf[String]).asScala.toSet.map(id => Vehicle(id)) }
 
-  def sourceGroupedTiles = CassandraSource(new SimpleStatement("SELECT tile, count(*) FROM metro.vehicle_tile group by tile"))
-    .map{ row => TileVehicles(row.getString(0), row.getLong(1)) }
+  def sourceGroupedTiles = sourceTiles
+    .map{ row => TileVehicles(row.getString(0), row.getSet(1, classOf[String]).size()) }
 
-  def sourceFilledTiles = sourceGroupedTiles.map{ tileVehicle => Tile(tileVehicle.key) }
+  def sourceFilledTiles = sourceGroupedTiles.map{ _.tile }
 
-  def sourceVehiclesCount(tiles : Seq[String]) = sourceGroupedTiles.filter{ tile => tiles.contains(tile.key) }
+  def sourceVehiclesCount(tiles : Seq[String]) = sourceGroupedTiles.filter{ vc => tiles.contains(vc.tile.key) }
 
   def run = startServer("localhost", 8080, system)
 }

@@ -1,0 +1,10 @@
+-- create schema
+CREATE KEYSPACE metro WITH replication = {'class':'SimpleStrategy','replication_factor': 1};
+CREATE TABLE metro.vehicle (vehicleId text PRIMARY KEY, longitude double, latitude double);
+CREATE TABLE metro.tile_vehicles(tile text PRIMARY KEY, vehicles set<text>);
+
+-- populate
+INSERT INTO metro.vehicle(vehicleId, longitude, latitude) VALUES ('1', 1, -1);
+INSERT INTO metro.vehicle(vehicleId, longitude, latitude) VALUES ('2', 2, -2);
+
+INSERT INTO metro.tile_vehicles(tile, vehicles) VALUES ('1', {'1','2'});
