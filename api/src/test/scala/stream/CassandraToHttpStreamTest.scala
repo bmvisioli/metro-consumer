@@ -1,6 +1,6 @@
 package stream
 
-import base.{DockerComposeTag, Suite, TestSpec}
+import base.{DockerComposeTag, TestSpec}
 import org.scalatest.{ConfigMap, DoNotDiscover}
 
 @DoNotDiscover
@@ -12,11 +12,10 @@ class CassandraToHttpStreamTest extends TestSpec {
   val availableVehiclesResponse = """["1","2"]"""
   val vehicleCountResponse = """[{"tile":"1","vehicleCount":2}]"""
 
-  var subject : CassandraToHttpStream = null
+  var subject = HttpStream
 
   override def beforeAll(configMap : ConfigMap) = {
     implicit val session = Suite.createCassandraSession(configMap)
-    subject = new CassandraToHttpStream
   }
 
   "Endpoint vehicles/list" should "reply with a list of vehicles" taggedAs (DockerComposeTag) in {

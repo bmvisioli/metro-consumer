@@ -1,10 +1,11 @@
-package base
+package stream
 
 import com.datastax.driver.core.{Cluster, Session}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterAllConfigMap, ConfigMap, Suites}
-import stream.CassandraToHttpStreamTest
 
+import scala.collection.Iterator.continually
 import scala.io.Source
+import scala.util.Try
 
 object Suite {
   def createCassandraSession(configMap : ConfigMap) = {
@@ -24,8 +25,9 @@ class Suite extends Suites(new CassandraToHttpStreamTest)
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
 
   override def beforeAll(configMap : ConfigMap) {
-    //continually(Try(Suite.createCassandraSession(configMap))).takeWhile{ _.isFailure }.head
-    Thread.sleep(10000) // Cassandra docker image returns before starting fully!!!!
+    continually{Thread.sleep(500); Try(Suite.createCassandraSession(configMap))}
+      .takeWhile{ _.isFailure }
+      .foreach{ _ => println("waiting for cassandra...") }
     populateDatabase(Suite.createCassandraSession(configMap))
   }
 
@@ -34,7 +36,8 @@ class Suite extends Suites(new CassandraToHttpStreamTest)
   }
 
   def populateDatabase(session : Session) {
-    Source.fromResource("cassandra-setup")
+    Source
+      .fromFile("src/test/resources/cassandra-setup")
       .getLines()
       .filterNot( _.startsWith("--") )
       .filterNot( _.isEmpty )

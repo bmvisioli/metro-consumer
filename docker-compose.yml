@@ -1,4 +1,4 @@
-basic:
+api:
   image: metro-consumer:1.0
   links:
     - cassandra

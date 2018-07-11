@@ -1,11 +1,11 @@
 package stream
 
 import com.typesafe.config.ConfigFactory
+import model.VehicleConversionSupport
 
-trait StreamSupport {
+trait StreamSupport extends VehicleConversionSupport {
 
+  @transient
   val config = ConfigFactory.load()
-
-  def run
 
 }

@@ -13,7 +13,7 @@ abstract class TestSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterAllConfigMap {
 
-  override implicit val materializer = ActorMaterializer()
+  override implicit val materializer = ActorMaterializer(namePrefix = Some("materializer"))(system)
 
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = false
 
